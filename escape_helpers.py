@@ -1,6 +1,8 @@
 import datetime
 import re
 from warnings import warn
+from string.templatelib import Template, Interpolation
+import types
 
 """
 The template provides one other helper module, being the `escape_helpers`-module. It contains functions for SPARQL query-escaping. Example import:
@@ -72,9 +74,75 @@ def sparql_escape_uri(obj):
     obj = str(obj)
     return '<' + re.sub(r'[\\"<>]', lambda s: "\\" + s.group(0), obj) + '>'
 
+def sparql_escape_template(template: Template):
+    """
+    Converts the given t-string to a SPARQL-safe string, with the interpolations becoming RDF object strings with the right RDF-datatype.
+
+    Example:
+
+        sparql_escape_template(t\"""
+            SELECT ?person WHERE {
+                ?person foaf:name {name}
+            }
+        \""")
+
+    Use the format specifier to choose a specific serialisation format:
+
+        sparql_escape_template(t\"""
+            SELECT ?name WHERE {
+                {person:uri} foaf:name ?name
+            }
+        \""")
+
+    It is also possible to nest t-strings:
+
+        where_clause = t"?person foaf:name {name}"
+        sparql_escape_template(t\"""
+            SELECT ?person WHERE {
+                ?person a foaf:Person .
+                {where_clause}
+            }
+        \""")
+
+    As an escape hatch, it is possible to use the `safe` format to insert a string you know is safe:
+
+        where_clause = "?person a foaf:Person ."
+        sparql_escape_template(t\"""
+            SELECT ?name WHERE {
+                {where_clause:safe}
+                ?person foaf:name ?name
+            }
+        \""")
+    """
+    content = [
+        _sparql_escape_template_segment(segment)
+        for segment in template
+    ]
+
+    return ''.join(content)
+
+_SPARQL_ESCAPERS = {
+    'string': sparql_escape_string,
+    'datetime': sparql_escape_datetime,
+    'date': sparql_escape_date,
+    'time': sparql_escape_time,
+    'int': sparql_escape_int,
+    'float': sparql_escape_float,
+    'bool': sparql_escape_bool,
+    'uri': sparql_escape_uri,
+    'safe': str,
+}
+
+def _sparql_escape_template_segment(segment):
+    if isinstance(segment, Interpolation):
+        escaper = _SPARQL_ESCAPERS.get(segment.format_spec, sparql_escape)
+        return escaper(segment.value)
+    else:
+        return segment
+
 def sparql_escape(obj):
     """
-    Converts the given object to a SPARQL-safe RDF object string with the right RDF-datatype. 
+    Converts the given object to a SPARQL-safe RDF object string with the right RDF-datatype.
 
     These functions should be used especially when inserting user-input to avoid SPARQL-injection.
     Separate functions are available for different python datatypes.
@@ -104,6 +172,8 @@ def sparql_escape(obj):
         escaped_val = sparql_escape_float(obj)
     elif isinstance(obj, bool):
         escaped_val = sparql_escape_bool(obj)
+    elif isinstance(obj, Template):
+        escaped_val = sparql_escape_template(obj)
     else:
         warn("Unknown escape type '{}'. Escaping as string".format(type(obj)))
         escaped_val = sparql_escape_string(obj)

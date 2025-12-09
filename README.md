@@ -51,6 +51,12 @@ example docker-compose parameters:
 ```
 
 ### Helper methods
+<a id="helpers.consoleHandler"></a>
+
+#### `consoleHandler`
+
+> or stderr?
+
 <a id="helpers.generate_uuid"></a>
 
 #### `generate_uuid`
@@ -241,6 +247,52 @@ def sparql_escape_uri(obj)
 
 > Converts the given URI to a SPARQL-safe RDF object string with the right RDF-datatype.
 
+<a id="escape_helpers.sparql_escape_template"></a>
+
+#### `sparql_escape_template`
+
+```python
+def sparql_escape_template(template: Template)
+```
+
+> Converts the given t-string to a SPARQL-safe string, with the interpolations becoming RDF object strings with the right RDF-datatype.
+> 
+> Example:
+> 
+>     sparql_escape_template(t"""
+>         SELECT ?person WHERE {
+>             ?person foaf:name {name}
+>         }
+>     """)
+> 
+> Use the format specifier to choose a specific serialisation format:
+> 
+>     sparql_escape_template(t"""
+>         SELECT ?name WHERE {
+>             {person:uri} foaf:name ?name
+>         }
+>     """)
+> 
+> It is also possible to nest t-strings:
+> 
+>     where_clause = t"?person foaf:name {name}"
+>     sparql_escape_template(t"""
+>         SELECT ?person WHERE {
+>             ?person a foaf:Person .
+>             {where_clause}
+>         }
+>     """)
+> 
+> As an escape hatch, it is possible to use the `safe` format to insert a string you know is safe:
+> 
+>     where_clause = "?person a foaf:Person ."
+>     sparql_escape_template(t"""
+>         SELECT ?name WHERE {
+>             {where_clause:safe}
+>             ?person foaf:name ?name
+>         }
+>     """)
+
 <a id="escape_helpers.sparql_escape"></a>
 
 #### `sparql_escape`
@@ -249,7 +301,7 @@ def sparql_escape_uri(obj)
 def sparql_escape(obj)
 ```
 
-> Converts the given object to a SPARQL-safe RDF object string with the right RDF-datatype. 
+> Converts the given object to a SPARQL-safe RDF object string with the right RDF-datatype.
 > 
 > These functions should be used especially when inserting user-input to avoid SPARQL-injection.
 > Separate functions are available for different python datatypes.
