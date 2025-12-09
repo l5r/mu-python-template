@@ -1,4 +1,4 @@
-FROM tiangolo/meinheld-gunicorn:python3.8
+FROM python:3.14-alpine
 LABEL maintainer="team@semantic.works"
 
 # Gunicorn Docker config
@@ -6,10 +6,16 @@ ENV MODULE_NAME web
 ENV PYTHONPATH "/usr/src/app:/app"
 ENV WEB_CONCURRENCY "1"
 
-# Overrides the start.sh used in `tiangolo/meinheld-gunicorn`
+RUN pip install --no-cache-dir gunicorn==23.0.0
+
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 COPY ./start.sh /start.sh
 RUN chmod +x /start.sh
+COPY ./gunicorn_conf.py /gunicorn_conf.py
 
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/start.sh"]
 
 # Template config
 ENV APP_ENTRYPOINT web
@@ -34,3 +40,4 @@ ONBUILD RUN cd /app/ \
 
 ONBUILD ADD . /app/
 ONBUILD RUN touch /app/__init__.py
+
