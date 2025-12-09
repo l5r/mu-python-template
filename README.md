@@ -259,39 +259,47 @@ def sparql_escape_template(template: Template)
 > 
 > Example:
 > 
->     sparql_escape_template(t"""
->         SELECT ?person WHERE {
->             ?person foaf:name {name}
->         }
->     """)
+> ```py
+> sparql_escape_template(t"""
+>     SELECT ?person WHERE {
+>         ?person foaf:name {name}
+>     }
+> """)
+> ```
 > 
 > Use the format specifier to choose a specific serialisation format:
 > 
->     sparql_escape_template(t"""
->         SELECT ?name WHERE {
->             {person:uri} foaf:name ?name
->         }
->     """)
+> ```py
+> sparql_escape_template(t"""
+>     SELECT ?name WHERE {
+>         {person:uri} foaf:name ?name
+>     }
+> """)
+> ```
 > 
 > It is also possible to nest t-strings:
 > 
->     where_clause = t"?person foaf:name {name}"
->     sparql_escape_template(t"""
->         SELECT ?person WHERE {
->             ?person a foaf:Person .
->             {where_clause}
->         }
->     """)
+> ```py
+> where_clause = t"?person foaf:name {name}"
+> sparql_escape_template(t"""
+>     SELECT ?person WHERE {
+>         ?person a foaf:Person .
+>         {where_clause}
+>     }
+> """)
+> ```
 > 
 > As an escape hatch, it is possible to use the `safe` format to insert a string you know is safe:
 > 
->     where_clause = "?person a foaf:Person ."
->     sparql_escape_template(t"""
->         SELECT ?name WHERE {
->             {where_clause:safe}
->             ?person foaf:name ?name
->         }
->     """)
+> ```py
+> where_clause = "?person a foaf:Person ."
+> sparql_escape_template(t"""
+>     SELECT ?name WHERE {
+>         {where_clause:safe}
+>         ?person foaf:name ?name
+>     }
+> """)
+> ```
 
 <a id="escape_helpers.sparql_escape"></a>
 
